@@ -45,7 +45,7 @@ export async function requestPasswordReset(email: string) {
     console.log("\n=======================================================");
     console.log("👉 [AegisHealthAI] PASSWORD RESET TOKEN GENERATED");
     console.log(`Email: ${email}`);
-    console.log(`Link: http://localhost:3000/reset-password?token=${token}&email=${encodeURIComponent(email)}`);
+    console.log(`Link: ${process.env.NEXTAUTH_URL || "http://localhost:3000"}/reset-password?token=${token}&email=${encodeURIComponent(email)}`);
     console.log("=======================================================\n");
 
     return { 

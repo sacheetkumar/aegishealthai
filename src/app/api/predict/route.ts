@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
 
     // Handle dynamic follow-up question action
     if (action === "follow-up") {
-      const fastapiResponse = await fetch("http://localhost:8000/follow-up-question", {
+      const fastapiResponse = await fetch(`${process.env.PREDICTION_API_URL || "http://localhost:8000"}/follow-up-question`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 4. Request classification from FastAPI microservice
-    const fastapiResponse = await fetch("http://localhost:8000/predict", {
+    const fastapiResponse = await fetch(`${process.env.PREDICTION_API_URL || "http://localhost:8000"}/predict`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -150,7 +150,7 @@ export async function GET() {
     }
 
     // Call FastAPI to get available symptoms list
-    const fastapiResponse = await fetch("http://localhost:8000/symptoms");
+    const fastapiResponse = await fetch(`${process.env.PREDICTION_API_URL || "http://localhost:8000"}/symptoms`);
     if (!fastapiResponse.ok) {
       return NextResponse.json({ error: "Failed to retrieve symptoms list from ML service." }, { status: 502 });
     }
