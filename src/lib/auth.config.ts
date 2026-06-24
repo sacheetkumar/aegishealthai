@@ -30,6 +30,7 @@ function isGoogleConfiguredSync() {
 }
 
 export const authConfig = {
+  trustHost: true,
   providers: [
     ...(isGoogleConfiguredSync()
       ? [Google({
