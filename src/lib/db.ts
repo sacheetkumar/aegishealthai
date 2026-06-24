@@ -6,9 +6,7 @@ const connectionString = process.env.DATABASE_URL;
 let realPrisma: PrismaClient | null = null;
 if (isProd || connectionString) {
   try {
-    realPrisma = new PrismaClient({
-      ...(connectionString ? { datasourceUrl: connectionString } : {}),
-    });
+    realPrisma = new PrismaClient();
   } catch (e) {
     console.error("Failed to initialize Prisma client:", e);
     if (isProd) throw e;
