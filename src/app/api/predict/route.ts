@@ -106,7 +106,7 @@ export async function POST(req: NextRequest) {
         diseaseId: dbDisease?.id || null,
         confidence: topConfidence,
         modelName: "Gemini AI Symptom Analyzer",
-        modelRef: "gemini-1.5-flash",
+        modelRef: "gemini-2.0-flash",
         notes: JSON.stringify({
           predictions: predictionData.predictions,
           disclaimer: predictionData.disclaimer,
