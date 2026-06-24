@@ -1,14 +1,17 @@
 import { PrismaClient } from "@prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
-import { Pool } from "pg";
+import { PrismaNeon } from "@prisma/adapter-neon";
+import { neon, neonConfig } from "@neondatabase/serverless";
+
+// Neon serverless config - WebSocket for serverless environments
+neonConfig.poolQueryViaFetch = true;
 
 const connectionString = process.env.DATABASE_URL;
 
 let realPrisma: PrismaClient | null = null;
 try {
   if (connectionString) {
-    const pool = new Pool({ connectionString });
-    const adapter = new PrismaPg(pool);
+    const sql = neon(connectionString);
+    const adapter = new PrismaNeon(sql);
     realPrisma = new PrismaClient({ adapter });
   } else {
     realPrisma = new PrismaClient();
