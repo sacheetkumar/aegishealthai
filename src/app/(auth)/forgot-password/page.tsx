@@ -78,8 +78,8 @@ export default function ForgotPasswordPage() {
                   {successMessage}
                 </p>
                 <div className="mt-3 p-2.5 bg-background rounded-lg border border-border/80 text-[10px] text-left text-muted-foreground w-full font-mono">
-                  <span className="font-bold text-foreground block mb-1">Developer Notice:</span>
-                  Check your Node.js server terminal logs to grab the generated password reset link!
+                  <span className="font-bold text-foreground block mb-1">Note:</span>
+                  A password reset link has been generated. Please check your email or contact support if you do not receive it.
                 </div>
               </div>
             )}
