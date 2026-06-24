@@ -1,26 +1,220 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
+@theme {
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  /* AegisHealth Premium Custom Tokens */
+  --color-health-red: var(--health-red);
+  --color-health-orange: var(--health-orange);
+  --color-health-green: var(--health-green);
+  --color-health-blue: var(--health-blue);
+  
+  --font-sans: "Inter", var(--font-geist-sans), sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+@variant dark (&:where(.dark, .dark *));
+
+:root {
+  /* Ambient background icon colours (muted palette) */
+  --c-1: #d4737a; /* muted coral  */
+  --c-2: #9b8ec4; /* lavender      */
+  --c-3: #6ba8a8; /* teal          */
+  --c-4: #c9a85c; /* amber         */
+  --c-5: #c9878f; /* rose          */
+  --c-6: #7fa9c4; /* sky blue      */
+
+  --background: hsl(0 0% 100%);
+  --foreground: hsl(240 10% 3.9%);
+  
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(240 10% 3.9%);
+  
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(240 10% 3.9%);
+  
+  --primary: hsl(240 5.9% 10%);
+  --primary-foreground: hsl(0 0% 98%);
+  
+  --secondary: hsl(240 4.8% 95.9%);
+  --secondary-foreground: hsl(240 5.9% 10%);
+  
+  --muted: hsl(240 4.8% 95.9%);
+  --muted-foreground: hsl(240 3.8% 46.1%);
+  
+  --accent: hsl(240 4.8% 95.9%);
+  --accent-foreground: hsl(240 5.9% 10%);
+  
+  --destructive: hsl(346.8 77.2% 49.8%);
+  --destructive-foreground: hsl(355.7 100% 97.3%);
+  
+  --border: hsl(240 5.9% 90%);
+  --input: hsl(240 5.9% 90%);
+  --ring: hsl(240 5.9% 10%);
+  
+  --radius: 0.75rem;
+
+  /* Premium clinical colors */
+  --health-red: hsl(354 70% 54%);     /* Heart rate / critical */
+  --health-orange: hsl(28 95% 53%);    /* Warning / glucose */
+  --health-green: hsl(142 70% 45%);    /* Stable / steps / sleep */
+  --health-blue: hsl(210 100% 50%);    /* Activity / hydrations */
+}
+
+.dark {
+  --background: hsl(240 10% 3.9%);
+  --foreground: hsl(0 0% 98%);
+  
+  --card: hsl(240 10% 3.9%);
+  --card-foreground: hsl(0 0% 98%);
+  
+  --popover: hsl(240 10% 3.9%);
+  --popover-foreground: hsl(0 0% 98%);
+  
+  --primary: hsl(0 0% 98%);
+  --primary-foreground: hsl(240 5.9% 10%);
+  
+  --secondary: hsl(240 3.7% 15.9%);
+  --secondary-foreground: hsl(0 0% 98%);
+  
+  --muted: hsl(240 3.7% 15.9%);
+  --muted-foreground: hsl(240 5% 64.9%);
+  
+  --accent: hsl(240 3.7% 15.9%);
+  --accent-foreground: hsl(0 0% 98%);
+  
+  --destructive: hsl(355.7 100% 47.3%);
+  --destructive-foreground: hsl(355.7 100% 97.3%);
+  
+  --border: hsl(240 3.7% 15.9%);
+  --input: hsl(240 3.7% 15.9%);
+  --ring: hsl(240 4.9% 83.9%);
+
+  --health-red: hsl(354 75% 60%);
+  --health-orange: hsl(28 95% 60%);
+  --health-green: hsl(142 72% 50%);
+  --health-blue: hsl(210 100% 60%);
+}
+
+* {
+  border-color: var(--border);
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+}
+
+/* ── Ambient Background ── */
+.bg-ambient {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.bg-ambient svg {
+  position: absolute;
+  stroke: currentColor;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  will-change: transform, opacity;
+}
+
+/* Float keyframes */
+@keyframes float-a {
+  0%, 100% { transform: translate(0px, 0px) rotate(0deg); }
+  25%      { transform: translate(12px, -14px) rotate(2deg); }
+  50%      { transform: translate(-8px, -22px) rotate(-2.5deg); }
+  75%      { transform: translate(14px, -8px) rotate(1.5deg); }
+}
+@keyframes float-b {
+  0%, 100% { transform: translate(0px, 0px) rotate(0deg); }
+  25%      { transform: translate(-10px, -16px) rotate(-1.5deg); }
+  50%      { transform: translate(14px, -10px) rotate(3deg); }
+  75%      { transform: translate(-6px, -20px) rotate(-1deg); }
+}
+@keyframes float-c {
+  0%, 100% { transform: translate(0px, 0px) rotate(0deg); }
+  25%      { transform: translate(8px, -18px) rotate(-2deg); }
+  50%      { transform: translate(-12px, -12px) rotate(1.5deg); }
+  75%      { transform: translate(10px, -24px) rotate(-0.5deg); }
+}
+
+/* Opacity-pulse keyframes */
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.08; }
+  50%      { opacity: 0.20; }
+}
+@keyframes pulse-slwr {
+  0%, 100% { opacity: 0.06; }
+  50%      { opacity: 0.18; }
+}
+
+/* Animation utility classes */
+.f-a { animation: float-a 26s ease-in-out infinite; }
+.f-b { animation: float-b 30s ease-in-out infinite; }
+.f-c { animation: float-c 22s ease-in-out infinite; }
+.f-d { animation: float-a 28s ease-in-out infinite; }
+.f-e { animation: float-b 24s ease-in-out infinite; }
+
+.p-s { animation: pulse-slow 9s ease-in-out infinite; }
+.p-w { animation: pulse-slwr 11s ease-in-out infinite; }
+
+/* Delay desync helpers */
+.d-1  { animation-delay: 0s; }
+.d-2  { animation-delay: -4s; }
+.d-3  { animation-delay: -8s; }
+.d-4  { animation-delay: -12s; }
+.d-5  { animation-delay: -16s; }
+.d-6  { animation-delay: -3s; }
+.d-7  { animation-delay: -7s; }
+.d-8  { animation-delay: -11s; }
+.d-9  { animation-delay: -15s; }
+.d-10 { animation-delay: -19s; }
+
+/* prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .bg-ambient svg {
+    animation: none !important;
+    opacity: 0.06 !important;
+  }
+}
+
+/* Small screens: hide a few icons */
+@media (max-width: 640px) {
+  .hide-mobile { display: none; }
 }

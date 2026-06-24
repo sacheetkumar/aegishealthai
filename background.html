@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AegisHealth — Ambient Background</title>
+<style>
+  /* ── Reset & base ── */
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #f4f6f8;       /* very light, slightly cool near-white */
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ── Colour palette (muted) ── */
+  :root {
+    --c-1: #d4737a;   /* muted coral */
+    --c-2: #9b8ec4;   /* lavender   */
+    --c-3: #6ba8a8;   /* teal       */
+    --c-4: #c9a85c;   /* amber      */
+    --c-5: #c9878f;   /* rose       */
+    --c-6: #7fa9c4;   /* sky blue   */
+  }
+
+  /*
+   * Place this .bg-ambient <div> as the FIRST child of <body>.
+   * All page content goes AFTER it and uses position: relative; z-index: 1.
+   */
+  .bg-ambient {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  /* ── Icon base ── */
+  .bg-ambient svg {
+    position: absolute;
+    stroke: currentColor;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    will-change: transform, opacity;
+  }
+
+  /* ── Float keyframes (translate + slight rotate) ── */
+  @keyframes float-a {
+    0%, 100% { transform: translate(0px, 0px) rotate(0deg); }
+    25%      { transform: translate(12px, -14px) rotate(2deg); }
+    50%      { transform: translate(-8px, -22px) rotate(-2.5deg); }
+    75%      { transform: translate(14px, -8px) rotate(1.5deg); }
+  }
+  @keyframes float-b {
+    0%, 100% { transform: translate(0px, 0px) rotate(0deg); }
+    25%      { transform: translate(-10px, -16px) rotate(-1.5deg); }
+    50%      { transform: translate(14px, -10px) rotate(3deg); }
+    75%      { transform: translate(-6px, -20px) rotate(-1deg); }
+  }
+  @keyframes float-c {
+    0%, 100% { transform: translate(0px, 0px) rotate(0deg); }
+    25%      { transform: translate(8px, -18px) rotate(-2deg); }
+    50%      { transform: translate(-12px, -12px) rotate(1.5deg); }
+    75%      { transform: translate(10px, -24px) rotate(-0.5deg); }
+  }
+
+  /* ── Opacity-pulse keyframes ── */
+  @keyframes pulse-slow {
+    0%, 100% { opacity: 0.08; }
+    50%      { opacity: 0.20; }
+  }
+  @keyframes pulse-slwr {
+    0%, 100% { opacity: 0.06; }
+    50%      { opacity: 0.18; }
+  }
+
+  /* ── Assign per-icon animations via utility classes ── */
+  .f-a { animation: float-a 26s ease-in-out infinite; }
+  .f-b { animation: float-b 30s ease-in-out infinite; }
+  .f-c { animation: float-c 22s ease-in-out infinite; }
+  .f-d { animation: float-a 28s ease-in-out infinite; }
+  .f-e { animation: float-b 24s ease-in-out infinite; }
+
+  .p-s { animation: pulse-slow 9s ease-in-out infinite; }
+  .p-w { animation: pulse-slwr 11s ease-in-out infinite; }
+
+  /* Delay desync helpers */
+  .d-1  { animation-delay: 0s; }
+  .d-2  { animation-delay: -4s; }
+  .d-3  { animation-delay: -8s; }
+  .d-4  { animation-delay: -12s; }
+  .d-5  { animation-delay: -16s; }
+  .d-6  { animation-delay: -3s; }
+  .d-7  { animation-delay: -7s; }
+  .d-8  { animation-delay: -11s; }
+  .d-9  { animation-delay: -15s; }
+  .d-10 { animation-delay: -19s; }
+
+  /* ── Content example ── */
+  .content {
+    position: relative;
+    z-index: 1;
+    max-width: 600px;
+    margin: 2rem;
+    padding: 3rem 2.5rem;
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.04);
+    text-align: center;
+  }
+  .content h1 {
+    font-size: 1.75rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: #1a2a3a;
+    margin-bottom: 0.75rem;
+  }
+  .content p {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #4a5a6a;
+  }
+  .content .tag {
+    display: inline-block;
+    margin-top: 1.25rem;
+    padding: 0.35rem 1rem;
+    border-radius: 999px;
+    background: rgba(107, 168, 168, 0.15);
+    color: #3d7a7a;
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+  }
+
+  /* ── prefers-reduced-motion ── */
+  @media (prefers-reduced-motion: reduce) {
+    .bg-ambient svg {
+      animation: none !important;
+      opacity: 0.06 !important;
+    }
+    .content {
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
+  }
+
+  /* ── Small screens: hide a few icons ── */
+  @media (max-width: 640px) {
+    .hide-mobile { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== AMBIENT BACKGROUND ===== -->
+<div class="bg-ambient" aria-hidden="true">
+
+  <!-- 1 — Syringe (teal) -->
+  <svg class="f-a p-s d-1" style="top:8%;left:6%;width:48px;height:48px;color:var(--c-3);stroke-width:1.5" viewBox="0 0 24 24">
+    <line x1="20" y1="2" x2="2" y2="20"/>
+    <rect x="10" y="6" width="8" height="5" rx="1"/>
+    <line x1="14" y1="6" x2="14" y2="3"/>
+    <line x1="10" y1="11" x2="18" y2="11"/>
+    <circle cx="18" cy="10" r="1.2"/>
+  </svg>
+
+  <!-- 2 — Pill capsule (rose) -->
+  <svg class="f-b p-w d-3" style="top:14%;right:10%;width:52px;height:26px;color:var(--c-5);stroke-width:1.5" viewBox="0 0 24 12">
+    <rect x="1" y="1" width="22" height="10" rx="5"/>
+    <line x1="12" y1="1" x2="12" y2="11"/>
+  </svg>
+
+  <!-- 3 — Round pill (amber) -->
+  <svg class="f-c p-s d-5" style="bottom:22%;left:12%;width:40px;height:40px;color:var(--c-4);stroke-width:1.5" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="10"/>
+    <line x1="8" y1="12" x2="16" y2="12"/>
+  </svg>
+
+  <!-- 4 — Medical cross (coral) -->
+  <svg class="f-d p-w d-7 hide-mobile" style="top:5%;left:42%;width:44px;height:44px;color:var(--c-1);stroke-width:2.2" viewBox="0 0 24 24">
+    <line x1="12" y1="4" x2="12" y2="20"/>
+    <line x1="4" y1="12" x2="20" y2="12"/>
+  </svg>
+
+  <!-- 5 — Stethoscope (sky blue) -->
+  <svg class="f-e p-s d-2" style="bottom:12%;right:8%;width:50px;height:50px;color:var(--c-6);stroke-width:1.4" viewBox="0 0 24 24">
+    <path d="M6 18c0 2.2 1.8 4 4 4s4-1.8 4-4v-3"/>
+    <path d="M14 12c0-2.2 1.8-4 4-4"/>
+    <circle cx="18" cy="8" r="3.5"/>
+    <line x1="10" y1="22" x2="12" y2="15"/>
+  </svg>
+
+  <!-- 6 — Heartbeat / EKG (lavender) -->
+  <svg class="f-a p-w d-4" style="top:36%;left:3%;width:68px;height:34px;color:var(--c-2);stroke-width:1.3" viewBox="0 0 24 12">
+    <polyline points="1,7 5,7 7,2 9,11 11,7 15,7 17,2 19,11 21,7 23,7"/>
+  </svg>
+
+  <!-- 7 — Thermometer (amber) -->
+  <svg class="f-c p-s d-6 hide-mobile" style="top:60%;right:4%;width:32px;height:48px;color:var(--c-4);stroke-width:1.5" viewBox="0 0 12 20">
+    <rect x="4" y="1" width="4" height="12" rx="2"/>
+    <circle cx="6" cy="15" r="4"/>
+    <line x1="6" y1="6" x2="6" y2="9"/>
+    <line x1="6" y1="12" x2="6" y2="13"/>
+  </svg>
+
+  <!-- 8 — DNA helix (teal) -->
+  <svg class="f-b p-s d-8 hide-mobile" style="bottom:30%;left:50%;width:40px;height:56px;color:var(--c-3);stroke-width:1.3" viewBox="0 0 14 20">
+    <path d="M3 1c0 0 4 3 4 9s-4 9-4 9"/>
+    <path d="M11 1c0 0-4 3-4 9s4 9 4 9"/>
+    <line x1="3" y1="6" x2="11" y2="6"/>
+    <line x1="3" y1="14" x2="11" y2="14"/>
+  </svg>
+
+  <!-- 9 — Droplet / blood drop (coral) -->
+  <svg class="f-d p-w d-9" style="bottom:8%;left:28%;width:34px;height:44px;color:var(--c-1);stroke-width:1.5" viewBox="0 0 16 22">
+    <path d="M8 1c0 0-7 10-7 14a7 7 0 0 0 14 0c0-4-7-14-7-14z"/>
+  </svg>
+
+  <!-- 10 — Medical cross / plus (rose, smaller, extra desync) -->
+  <svg class="f-e p-s d-10" style="top:72%;left:80%;width:32px;height:32px;color:var(--c-5);stroke-width:1.8" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="9"/>
+    <line x1="12" y1="7" x2="12" y2="17"/>
+    <line x1="7" y1="12" x2="17" y2="12"/>
+  </svg>
+
+</div>
+<!-- ===== END BACKGROUND ===== -->
+
+<!-- ===== EXAMPLE CONTENT ===== -->
+<div class="content">
+  <h1>AegisHealth</h1>
+  <p>Secure clinical intelligence platform for modern healthcare. Your ambient background is ready behind this card.</p>
+  <span class="tag">Ambient BG &bull; 10 icons</span>
+</div>
+
+</body>
+</html>
