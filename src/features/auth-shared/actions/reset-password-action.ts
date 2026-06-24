@@ -41,12 +41,7 @@ export async function requestPasswordReset(email: string) {
       },
     });
 
-    // Log the link in the developer console so they can copy-paste it
-    console.log("\n=======================================================");
-    console.log("👉 [AegisHealthAI] PASSWORD RESET TOKEN GENERATED");
-    console.log(`Email: ${email}`);
-    console.log(`Link: ${process.env.NEXTAUTH_URL || "http://localhost:3000"}/reset-password?token=${token}&email=${encodeURIComponent(email)}`);
-    console.log("=======================================================\n");
+    // TODO: Send email with reset link via email service (e.g. Resend, SendGrid)
 
     return { 
       success: true, 
