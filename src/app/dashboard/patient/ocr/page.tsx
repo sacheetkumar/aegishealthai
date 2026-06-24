@@ -29,8 +29,7 @@ import {
 } from "lucide-react";
 import { getDoctorRecommendations, type RecommendedDoctor } from "@/features/doctors/actions/recommend-doctors";
 import { bookAppointmentAction } from "@/features/doctors/actions/book-appointment";
-import { parsePrescriptionAction } from "@/features/patients/actions/parse-prescription";
-import Tesseract from "tesseract.js";
+
 
 interface PrescriptionTemplate {
   name: string;
@@ -189,39 +188,34 @@ export default function OcrPrescriptionPage() {
       let prescrDoc: RecommendedDoctor | null = null;
 
       if (file) {
-        setScanStepLog("Initializing Tesseract OCR WebAssembly engine...");
-        
-        // Run client-side Tesseract OCR with progress logging
-        const result = await Tesseract.recognize(file, "eng", {
-          logger: (m) => {
-            if (m.status === "recognizing text") {
-              setScanStepLog(`Extracting text parameters: ${Math.round(m.progress * 100)}%`);
-            } else {
-              setScanStepLog(m.status.charAt(0).toUpperCase() + m.status.slice(1) + "...");
-            }
-          },
+        setScanStepLog("Analyzing prescription image with Gemini AI...");
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const res = await fetch("/api/parse-prescription-image", {
+          method: "POST",
+          body: formData,
         });
 
-        rawText = result.data.text;
-        
-        if (!rawText || rawText.trim().length < 15) {
-          throw new Error("OCR scan produced insufficient or illegible text. Please upload a clearer image of a prescription.");
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error || "AI analysis failed");
         }
 
-        setScanStepLog("Verifying medical parameters via Aegis AI parser...");
-        
-        const parseResponse = await parsePrescriptionAction(rawText);
-        if (!parseResponse.success) {
-          throw new Error(parseResponse.error || "Failed to parse prescription data.");
+        const result = await res.json();
+
+        if (!result.success || !result.data?.is_prescription) {
+          throw new Error("The uploaded file does not appear to be a valid medical prescription.");
         }
 
-        diseaseName = parseResponse.data?.disease || "General";
-        patientName = parseResponse.data?.patientName || null;
-        doctorName = parseResponse.data?.doctorName || null;
-        medications = parseResponse.data?.medications || [];
-        symptoms = parseResponse.data?.symptoms || [];
-        precautions = parseResponse.data?.precautions || [];
-        prescrDoc = parseResponse.prescribedDoctor || null;
+        diseaseName = result.data.disease || "General";
+        patientName = result.data.patient_name || null;
+        doctorName = result.data.doctor_name || null;
+        medications = result.data.medications || [];
+        symptoms = result.data.symptoms || [];
+        precautions = result.data.precautions || [];
+        rawText = JSON.stringify(result.data, null, 2);
       } else {
         // Fallback to presets scenario templates
         const steps = [
@@ -244,19 +238,7 @@ export default function OcrPrescriptionPage() {
         precautions = matchedTemplate.precautions;
         patientName = "Alex Rivera";
         
-        // For scenario template, let's search if default doc exists
-        try {
-          const parseResponse = await parsePrescriptionAction(rawText);
-          if (parseResponse.success && parseResponse.isPrescription) {
-            prescrDoc = parseResponse.prescribedDoctor || null;
-            doctorName = parseResponse.data?.doctorName || "Dr. Vikram Rao";
-          } else {
-            doctorName = "Dr. Vikram Rao";
-          }
-        } catch (e) {
-          console.warn("Could not fetch prescribed doctor for preset:", e);
-          doctorName = "Dr. Vikram Rao";
-        }
+        doctorName = "Dr. Vikram Rao";
       }
 
       setScannedData({
