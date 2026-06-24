@@ -1,4 +1,6 @@
 import { PrismaClient } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
 
 const isProd = process.env.NODE_ENV === "production";
 const connectionString = process.env.DATABASE_URL;
@@ -6,7 +8,9 @@ const connectionString = process.env.DATABASE_URL;
 let realPrisma: PrismaClient | null = null;
 if (isProd || connectionString) {
   try {
-    realPrisma = new PrismaClient();
+    const pool = new Pool({ connectionString });
+    const adapter = new PrismaPg(pool);
+    realPrisma = new PrismaClient({ adapter });
   } catch (e) {
     console.error("Failed to initialize Prisma client:", e);
     if (isProd) throw e;
