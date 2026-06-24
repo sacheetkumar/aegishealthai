@@ -18,18 +18,23 @@ DISEASE_EMBEDDINGS = {}
 
 # Gemini configure
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+gemini_client = None
+gemini_client_name = "gemini-2.0-flash"
 if GEMINI_API_KEY:
-    import google.generativeai as genai
-    genai.configure(api_key=GEMINI_API_KEY)
-    gemini_model = genai.GenerativeModel("gemini-2.0-flash")
-else:
-    gemini_model = None
+    import google.genai as genai
+    gemini_client = genai.Client(api_key=GEMINI_API_KEY)
 
 def _call_gemini(prompt_text, **gen_kwargs):
     import time as _t
+    gen_kwargs.pop("generation_config", None)
+    config = gen_kwargs.pop("config", None)
     for attempt in range(3):
         try:
-            return gemini_model.generate_content(prompt_text, **gen_kwargs)
+            return gemini_client.models.generate_content(
+                model=gemini_client_name,
+                contents=prompt_text,
+                config=config
+            )
         except Exception as e:
             if attempt < 2 and ("429" in str(e) or "RESOURCE_EXHAUSTED" in str(e)):
                 _t.sleep(2 ** attempt)
@@ -471,7 +476,7 @@ def predict(request: PredictRequest):
     print("Retrieved semantic context matches:\n", context_text)
 
     # 2. Invoke Gemini model
-    if not gemini_model:
+    if not gemini_client:
         # Emergency mockup fallback if API key is missing to keep service operational
         print("WARNING: Gemini model not initialized. Using local mockup fallback.")
         # Find top match from similarity list
@@ -582,7 +587,7 @@ Return ONLY a valid JSON object matching the schema below. Do not include markdo
 @app.post("/follow-up-question", response_model=FollowUpResponse)
 def follow_up_question(request: FollowUpRequest):
     print("\n--- DYNAMIC FOLLOW-UP QUESTION REQUEST ---")
-    if not gemini_model:
+    if not gemini_client:
         return FollowUpResponse(question="Could you please provide more details about the duration and intensity of your symptoms?")
 
     prompt = f"""
@@ -656,7 +661,7 @@ def parse_prescription(request: ParsePrescriptionRequest):
             error="Input text is empty."
         )
 
-    if not gemini_model:
+    if not gemini_client:
         # Mock fallback if Gemini is not configured
         print("WARNING: Gemini model not initialized. Using fallback parsing.")
         text_lower = request.text.lower()
