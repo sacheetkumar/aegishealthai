@@ -1,23 +1,14 @@
 import { PrismaClient } from "@prisma/client";
-import { PrismaNeon } from "@prisma/adapter-neon";
-import { neon, neonConfig } from "@neondatabase/serverless";
-
-// Neon serverless config - WebSocket for serverless environments
-neonConfig.poolQueryViaFetch = true;
 
 const connectionString = process.env.DATABASE_URL;
 
 let realPrisma: PrismaClient | null = null;
 try {
-  if (connectionString) {
-    const sql = neon(connectionString);
-    const adapter = new PrismaNeon(sql);
-    realPrisma = new PrismaClient({ adapter });
-  } else {
-    realPrisma = new PrismaClient();
-  }
+  realPrisma = new PrismaClient({
+    ...(connectionString ? { datasourceUrl: connectionString } : {}),
+  });
 } catch (e) {
-  console.warn("⚠️ Failed to initialize Prisma PostgreSQL client: ", e);
+  console.warn("⚠️ Failed to initialize Prisma client: ", e);
   realPrisma = null;
 }
 
