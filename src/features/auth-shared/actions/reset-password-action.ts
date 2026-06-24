@@ -6,7 +6,7 @@ import crypto from "crypto";
 
 /**
  * Initiates the password reset flow.
- * Generates a verification token and prints the reset URL in the console for testing.
+ * Generates a verification token and stores it in the database.
  */
 export async function requestPasswordReset(email: string) {
   try {
