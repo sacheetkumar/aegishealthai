@@ -302,11 +302,15 @@ def get_db_connection():
 def startup_event():
     global model, DISEASE_EMBEDDINGS
     
-    # 1. Load Sentence Transformer model
+    # 1. Load Sentence Transformer model (non-fatal if it fails)
     print("Loading Sentence Transformer embedding model...")
-    from sentence_transformers import SentenceTransformer
-    model = SentenceTransformer('all-MiniLM-L6-v2')
-    print("Embedding model loaded.")
+    try:
+        from sentence_transformers import SentenceTransformer
+        model = SentenceTransformer('all-MiniLM-L6-v2')
+        print("Embedding model loaded.")
+    except Exception as e:
+        print(f"Warning: Failed to load SentenceTransformer: {e}. Gemini-only mode.")
+        model = None
 
     # 2. Synchronize database content
     print("Syncing medical records with PostgreSQL...")
@@ -347,17 +351,20 @@ def startup_event():
         documents.append(doc_text)
         names.append(name)
         
-    embeddings = model.encode(documents)
-    
-    for idx, name in enumerate(names):
-        info = knowledge_base[name]
-        DISEASE_EMBEDDINGS[name] = {
-            "embedding": embeddings[idx],
-            "specialist": info["specialist"],
-            "description": info["description"],
-            "precautions": info["precautions"]
-        }
-    print(f"Loaded {len(DISEASE_EMBEDDINGS)} disease embeddings in memory.")
+    if model:
+        embeddings = model.encode(documents)
+        
+        for idx, name in enumerate(names):
+            info = knowledge_base[name]
+            DISEASE_EMBEDDINGS[name] = {
+                "embedding": embeddings[idx],
+                "specialist": info["specialist"],
+                "description": info["description"],
+                "precautions": info["precautions"]
+            }
+        print(f"Loaded {len(DISEASE_EMBEDDINGS)} disease embeddings in memory.")
+    else:
+        print("Skipping embeddings (no SentenceTransformer model available).")
 
 def get_similar_diseases_numpy(query_str: str, limit: int = 5) -> str:
     """
