@@ -905,8 +905,18 @@ const probePromise = realPrisma ? probeDatabase(realPrisma) : Promise.resolve(fa
 probePromise.then(ok => { databaseAvailable = ok; });
 
 // Create a fallback proxy client that intercepts database connection failures
+// In production, errors are thrown instead of falling back to mock store
 function createDatabaseProxy(real: PrismaClient | null, fallback: any) {
   let useFallback = false;
+  const isProd = process.env.NODE_ENV === "production";
+
+  function throwIfProd(error: any): never {
+    if (isProd) {
+      console.error("🚨 Production database error:", error?.message || error);
+      throw new Error(`Database connection failed: ${error?.message || "Unknown error"}`);
+    }
+    throw error;
+  }
 
   const getTargetHandler = (targetPath: string[]): any => {
     return new Proxy(() => {}, {
@@ -921,11 +931,11 @@ function createDatabaseProxy(real: PrismaClient | null, fallback: any) {
       },
       async apply(target, thisArg, argumentsList) {
         if (!useFallback && real) {
-          // Wait for the startup probe to complete before deciding
           if (!databaseAvailable) {
             await probePromise;
           }
           if (!databaseAvailable) {
+            if (isProd) throw new Error("Database is not available");
             useFallback = true;
           } else {
             try {
@@ -936,14 +946,18 @@ function createDatabaseProxy(real: PrismaClient | null, fallback: any) {
               const method = targetPath.length > 0 ? parent[targetPath[targetPath.length - 1]] : parent;
               return await method.apply(parent, argumentsList);
             } catch (error: any) {
+              if (isProd) throwIfProd(error);
               const msg = error?.message || "";
-              console.warn("⚠️ AegisHealthAI Database query failed. Falling back to in-memory sandbox DB:", msg.slice(0, 120));
+              console.warn("⚠️ Database query failed. Falling back to in-memory sandbox DB:", msg.slice(0, 120));
               useFallback = true;
             }
           }
         }
 
-        // Run query against fallback in-memory client
+        if (isProd && useFallback) {
+          throw new Error("Database fallback should not occur in production");
+        }
+
         let parent: any = fallback;
         for (let i = 0; i < targetPath.length - 1; i++) {
           parent = parent[targetPath[i]];
@@ -975,13 +989,18 @@ function createDatabaseProxy(real: PrismaClient | null, fallback: any) {
               try {
                 return await real.$transaction(cb);
               } catch (error: any) {
+                if (isProd) throwIfProd(error);
                 const msg = error?.message || "";
                 console.warn("⚠️ Database transaction failed. Falling back to in-memory sandbox DB:", msg.slice(0, 120));
                 useFallback = true;
               }
             } else {
+              if (isProd) throw new Error("Database is not available");
               useFallback = true;
             }
+          }
+          if (isProd && useFallback) {
+            throw new Error("Database fallback should not occur in production");
           }
           return await fallback.$transaction(cb);
         };
