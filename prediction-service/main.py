@@ -25,6 +25,17 @@ if GEMINI_API_KEY:
 else:
     gemini_model = None
 
+def _call_gemini(prompt_text, **gen_kwargs):
+    import time as _t
+    for attempt in range(3):
+        try:
+            return gemini_model.generate_content(prompt_text, **gen_kwargs)
+        except Exception as e:
+            if attempt < 2 and ("429" in str(e) or "RESOURCE_EXHAUSTED" in str(e)):
+                _t.sleep(2 ** attempt)
+                continue
+            raise e
+
 # Clinical specialist categories
 SPECIALIST_MAPPING = {
     "Cardiovascular": "Cardiologist",
@@ -543,12 +554,7 @@ Return ONLY a valid JSON object matching the schema below. Do not include markdo
 """
 
     try:
-        response = gemini_model.generate_content(
-            prompt,
-            generation_config={
-                "response_mime_type": "application/json"
-            }
-        )
+        response = _call_gemini(prompt, generation_config={"response_mime_type": "application/json"})
         
         result_json = json.loads(response.text)
         print("Gemini response parsed successfully.")
@@ -588,7 +594,7 @@ Chat history: {json.dumps(request.history)}
 Generate a single intelligent, warm, clinical follow-up question to help narrow down the diagnosis. Do not include any explanations, greetings, or formatting, just the question.
 """
     try:
-        response = gemini_model.generate_content(prompt)
+        response = _call_gemini(prompt)
         question = response.text.strip()
         return FollowUpResponse(question=question)
     except Exception as e:
@@ -750,12 +756,7 @@ Output Schema:
 """
 
     try:
-        response = gemini_model.generate_content(
-            prompt,
-            generation_config={
-                "response_mime_type": "application/json"
-            }
-        )
+        response = _call_gemini(prompt, generation_config={"response_mime_type": "application/json"})
         
         result_json = json.loads(response.text)
         print("OCR parse successful:", result_json)
