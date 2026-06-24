@@ -16,7 +16,8 @@ export async function registerUser(data: {
   address?: string;
 }) {
   try {
-    const { name, email, password, role, specialty, licenseNumber, mobileNumber, clinicPhone, address } = data;
+    const { name, password, role, specialty, licenseNumber, mobileNumber, clinicPhone, address } = data;
+    const email = data.email.toLowerCase().trim();
 
     if (!email || !name) {
       return { success: false, error: "Name and email are required." };
