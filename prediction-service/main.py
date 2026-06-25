@@ -491,6 +491,42 @@ def get_similar_diseases_numpy(query_str: str, limit: int = 5) -> str:
         
     return "\n".join(lines)
 
+class PredictRequest(BaseModel):
+    symptoms_text: str = ""
+    symptoms_tags: List[str] = []
+
+class DiseasePrediction(BaseModel):
+    disease: str
+    confidence: float
+    severity: str
+    emergency_warning: Optional[str] = None
+    specialist: str
+    description: str
+    precautions: List[str]
+
+class PredictResponse(BaseModel):
+    success: bool
+    follow_up_required: bool
+    follow_up_question: Optional[str] = None
+    predictions: List[DiseasePrediction] = []
+    disclaimer: str
+    model_used: str = "AI"
+
+class FollowUpRequest(BaseModel):
+    symptoms_text: str = ""
+    symptoms_tags: List[str] = []
+    history: List[Dict[str, str]] = []
+
+class FollowUpResponse(BaseModel):
+    question: str
+
+class RecommendationRequest(BaseModel):
+    disease: str
+
+class RecommendationResponse(BaseModel):
+    specialty: str
+    specialist: str
+
 def _dataset_prediction(query_str: str) -> PredictResponse:
     """
     Fallback prediction using only the embedded dataset (no AI models).
@@ -530,42 +566,6 @@ def _dataset_prediction(query_str: str) -> PredictResponse:
         disclaimer="Disclaimer: This prediction is for informational purposes only (Dataset-based fallback).",
         model_used="Dataset"
     )
-
-class PredictRequest(BaseModel):
-    symptoms_text: str = ""
-    symptoms_tags: List[str] = []
-
-class DiseasePrediction(BaseModel):
-    disease: str
-    confidence: float
-    severity: str
-    emergency_warning: Optional[str] = None
-    specialist: str
-    description: str
-    precautions: List[str]
-
-class PredictResponse(BaseModel):
-    success: bool
-    follow_up_required: bool
-    follow_up_question: Optional[str] = None
-    predictions: List[DiseasePrediction] = []
-    disclaimer: str
-    model_used: str = "AI"
-
-class FollowUpRequest(BaseModel):
-    symptoms_text: str = ""
-    symptoms_tags: List[str] = []
-    history: List[Dict[str, str]] = []
-
-class FollowUpResponse(BaseModel):
-    question: str
-
-class RecommendationRequest(BaseModel):
-    disease: str
-
-class RecommendationResponse(BaseModel):
-    specialty: str
-    specialist: str
 
 @app.get("/symptoms")
 def get_symptoms():
