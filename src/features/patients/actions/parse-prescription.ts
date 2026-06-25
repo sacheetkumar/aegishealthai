@@ -21,7 +21,8 @@ export interface ParseOcrResponse {
 
 export async function parsePrescriptionAction(rawText: string): Promise<ParseOcrResponse> {
   try {
-    const fastapiResponse = await fetch(`${process.env.PREDICTION_API_URL || "http://localhost:8000"}/parse-prescription`, {
+    const apiUrl = (process.env.PREDICTION_API_URL || "http://localhost:8000").replace(/\/$/, "");
+    const fastapiResponse = await fetch(`${apiUrl}/parse-prescription`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text: rawText }),

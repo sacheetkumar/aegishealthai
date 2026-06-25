@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 
+const getApiUrl = () => (process.env.PREDICTION_API_URL || "http://localhost:8000").replace(/\/$/, "");
+
 export async function POST(req: NextRequest) {
   try {
     // 1. Authenticate session
@@ -29,7 +31,7 @@ export async function POST(req: NextRequest) {
 
     // Handle dynamic follow-up question action
     if (action === "follow-up") {
-      const fastapiResponse = await fetch(`${process.env.PREDICTION_API_URL || "http://localhost:8000"}/follow-up-question`, {
+      const fastapiResponse = await fetch(`${getApiUrl()}/follow-up-question`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -56,7 +58,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 4. Request classification from FastAPI microservice
-    const fastapiResponse = await fetch(`${process.env.PREDICTION_API_URL || "http://localhost:8000"}/predict`, {
+    const fastapiResponse = await fetch(`${getApiUrl()}/predict`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -150,7 +152,7 @@ export async function GET() {
     }
 
     // Call FastAPI to get available symptoms list
-    const fastapiResponse = await fetch(`${process.env.PREDICTION_API_URL || "http://localhost:8000"}/symptoms`);
+    const fastapiResponse = await fetch(`${getApiUrl()}/symptoms`);
     if (!fastapiResponse.ok) {
       return NextResponse.json({ error: "Failed to retrieve symptoms list from ML service." }, { status: 502 });
     }

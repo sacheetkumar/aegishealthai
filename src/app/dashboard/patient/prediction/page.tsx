@@ -255,7 +255,7 @@ export default function PredictionPage() {
           setAiResults(data.aiResults);
           toast.success("Gemini AI Diagnostics completed successfully!");
           
-          const primaryDisease = data.aiResults.predictions[0]?.disease;
+          const primaryDisease = data.aiResults?.predictions?.[0]?.disease;
           if (primaryDisease) {
             await fetchDoctorRecommendations(primaryDisease);
           }
@@ -307,7 +307,7 @@ export default function PredictionPage() {
           setFollowUpQuestion(null);
           toast.success("Gemini AI Diagnostics completed successfully!");
           
-          const primaryDisease = data.aiResults.predictions[0]?.disease;
+          const primaryDisease = data.aiResults?.predictions?.[0]?.disease;
           if (primaryDisease) {
             await fetchDoctorRecommendations(primaryDisease);
           }
@@ -673,13 +673,13 @@ export default function PredictionPage() {
                   className="space-y-4"
                 >
                   {/* Emergency alert if high severity warning exists */}
-                  {aiResults.predictions[0]?.severity === "High" && (
+                  {aiResults?.predictions?.[0]?.severity === "High" && (
                     <div className="p-3.5 bg-red-500/10 text-red-600 rounded-lg border border-red-500/25 flex gap-2.5 items-start text-xs shadow-xs">
                       <ShieldAlert className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
                       <div>
                         <div className="font-bold uppercase tracking-wider text-[10px] text-red-700">Urgent Care Warning</div>
                         <p className="mt-0.5 text-[11px] text-red-600 leading-relaxed font-semibold">
-                          {aiResults.predictions[0]?.emergency_warning || "High severity detected. Please seek emergency medical care immediately."}
+                          {aiResults?.predictions?.[0]?.emergency_warning || "High severity detected. Please seek emergency medical care immediately."}
                         </p>
                       </div>
                     </div>
@@ -697,7 +697,7 @@ export default function PredictionPage() {
                       
                       {/* Top predicted diseases list */}
                       <div className="space-y-4">
-                        {aiResults.predictions.map((p: any, idx: number) => {
+                        {aiResults?.predictions?.map((p: any, idx: number) => {
                           const isTop = idx === 0;
                           const severityColors: any = {
                             "Low": "bg-emerald-500/15 text-emerald-600 border-emerald-500/20",
@@ -766,7 +766,7 @@ export default function PredictionPage() {
                       <div className="flex gap-2">
                         <ShieldAlert className="h-4 w-4 text-health-orange shrink-0 mt-0.5" />
                         <span>
-                          {aiResults.disclaimer || "AegisHealthAI clinical predictions are generated for informational purposes only. Do not substitute this diagnosis for professional medical care."}
+                          {aiResults?.disclaimer || "AegisHealthAI clinical predictions are generated for informational purposes only. Do not substitute this diagnosis for professional medical care."}
                         </span>
                       </div>
                     </CardFooter>

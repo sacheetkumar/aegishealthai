@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 import os
@@ -9,6 +10,15 @@ import numpy as np
 app = FastAPI(
     title="AegisHealthAI AI Prediction Service",
     description="FastAPI AI microservice leveraging sentence-transformers, NumPy vector search, and Gemini API."
+)
+
+# Add CORS Middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Global clients/models
@@ -26,8 +36,7 @@ if GEMINI_API_KEY:
 
 def _call_gemini(prompt_text, **gen_kwargs):
     import time as _t
-    gen_kwargs.pop("generation_config", None)
-    config = gen_kwargs.pop("config", None)
+    config = gen_kwargs.pop("config", None) or gen_kwargs.pop("generation_config", None)
     for attempt in range(3):
         try:
             return gemini_client.models.generate_content(
@@ -40,6 +49,16 @@ def _call_gemini(prompt_text, **gen_kwargs):
                 _t.sleep(2 ** attempt)
                 continue
             raise e
+
+def clean_and_parse_json(text: str) -> dict:
+    cleaned = text.strip()
+    if cleaned.startswith("```"):
+        # Remove starting ```json or ```
+        cleaned = cleaned.split("\n", 1)[1] if "\n" in cleaned else cleaned
+        # Remove ending ```
+        if cleaned.endswith("```"):
+            cleaned = cleaned[:-3].strip()
+    return json.loads(cleaned)
 
 # Clinical specialist categories
 SPECIALIST_MAPPING = {
@@ -561,7 +580,7 @@ Return ONLY a valid JSON object matching the schema below. Do not include markdo
     try:
         response = _call_gemini(prompt, generation_config={"response_mime_type": "application/json"})
         
-        result_json = json.loads(response.text)
+        result_json = clean_and_parse_json(response.text)
         print("Gemini response parsed successfully.")
         
         # Clean/normalize specialist name according to specifications
@@ -763,7 +782,7 @@ Output Schema:
     try:
         response = _call_gemini(prompt, generation_config={"response_mime_type": "application/json"})
         
-        result_json = json.loads(response.text)
+        result_json = clean_and_parse_json(response.text)
         print("OCR parse successful:", result_json)
         
         return ParsePrescriptionResponse(

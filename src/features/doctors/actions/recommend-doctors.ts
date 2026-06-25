@@ -74,7 +74,8 @@ export async function getDoctorRecommendations(diseaseName: string): Promise<Rec
   try {
     let matchedSpecialtyName = "Internal Medicine";
     try {
-      const res = await fetch(`${process.env.PREDICTION_API_URL || "http://localhost:8000"}/doctor-recommendation`, {
+      const apiUrl = (process.env.PREDICTION_API_URL || "http://localhost:8000").replace(/\/$/, "");
+      const res = await fetch(`${apiUrl}/doctor-recommendation`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ disease: diseaseName })
