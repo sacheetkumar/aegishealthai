@@ -59,31 +59,56 @@ Respond ONLY with a valid JSON object. No markdown, no extra text.
   "precautions": ["precaution 1", "precaution 2"]
 }`;
 
-    const geminiRes = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              { text: prompt },
-              { inline_data: { mime_type: mimeType, data: base64 } }
-            ]
-          }
-        ]
-      })
-    });
+    const fallbackModels = [
+      "gemini-2.0-flash",
+      "gemini-1.5-flash",
+      "gemini-2.0-flash-lite-preview-02-05",
+      "gemini-1.5-pro"
+    ];
 
-    if (!geminiRes.ok) {
-      const errText = await geminiRes.text();
-      return NextResponse.json({ error: `Gemini API error: ${errText}` }, { status: 502 });
+    let text = "";
+    let lastError = "";
+
+    for (const modelName of fallbackModels) {
+      try {
+        console.log(`Attempting prescription image analysis with model: ${modelName}`);
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${GEMINI_API_KEY}`;
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  { text: prompt },
+                  { inline_data: { mime_type: mimeType, data: base64 } }
+                ]
+              }
+            ]
+          })
+        });
+
+        if (response.ok) {
+          const geminiData = await response.json();
+          const candidateText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (candidateText) {
+            text = candidateText;
+            break;
+          }
+        } else {
+          lastError = await response.text();
+          if (response.status === 429) {
+            console.warn(`Model ${modelName} rate limited, trying next...`);
+            continue;
+          }
+        }
+      } catch (err: any) {
+        lastError = err.message || String(err);
+      }
     }
 
-    const geminiData = await geminiRes.json();
-    const text = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
-
     if (!text) {
-      return NextResponse.json({ error: "Gemini returned no content" }, { status: 502 });
+      return NextResponse.json({ error: `Gemini API error: ${lastError || "No content returned from any model"}` }, { status: 502 });
     }
 
     const parsed = JSON.parse(text.replace(/```json|```/g, "").trim());

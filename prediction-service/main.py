@@ -37,18 +37,28 @@ if GEMINI_API_KEY:
 def _call_gemini(prompt_text, **gen_kwargs):
     import time as _t
     config = gen_kwargs.pop("config", None) or gen_kwargs.pop("generation_config", None)
-    for attempt in range(3):
-        try:
-            return gemini_client.models.generate_content(
-                model=gemini_client_name,
-                contents=prompt_text,
-                config=config
-            )
-        except Exception as e:
-            if attempt < 2 and ("429" in str(e) or "RESOURCE_EXHAUSTED" in str(e)):
-                _t.sleep(2 ** attempt)
-                continue
-            raise e
+    
+    fallback_models = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-2.0-flash-lite-preview-02-05", "gemini-1.5-pro"]
+    
+    last_exception = None
+    for model_name in fallback_models:
+        for attempt in range(2):
+            try:
+                print(f"Attempting Gemini generation with model: {model_name}...")
+                return gemini_client.models.generate_content(
+                    model=model_name,
+                    contents=prompt_text,
+                    config=config
+                )
+            except Exception as e:
+                last_exception = e
+                err_str = str(e)
+                if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
+                    print(f"Model {model_name} rate limited/exhausted: {err_str}. Trying next option...")
+                    _t.sleep(1)
+                    continue
+                raise e
+    raise last_exception
 
 def clean_and_parse_json(text: str) -> dict:
     cleaned = text.strip()
