@@ -42,9 +42,8 @@ export async function POST(req: NextRequest) {
       });
 
       if (!fastapiResponse.ok) {
-        const errorText = await fastapiResponse.text();
         return NextResponse.json(
-          { error: `AI service returned error: ${errorText || fastapiResponse.statusText}` },
+          { error: "failed due to poor internet connection, check your connection again" },
           { status: fastapiResponse.status }
         );
       }
@@ -68,9 +67,8 @@ export async function POST(req: NextRequest) {
     });
 
     if (!fastapiResponse.ok) {
-      const errorText = await fastapiResponse.text();
       return NextResponse.json(
-        { error: `AI Service returned error: ${errorText || fastapiResponse.statusText}` },
+        { error: "failed due to poor internet connection, check your connection again" },
         { status: fastapiResponse.status }
       );
     }
@@ -78,7 +76,7 @@ export async function POST(req: NextRequest) {
     const predictionData = await fastapiResponse.json();
 
     if (!predictionData.success) {
-      return NextResponse.json({ error: "AI prediction failed." }, { status: 500 });
+      return NextResponse.json({ error: "failed due to poor internet connection, check your connection again" }, { status: 500 });
     }
 
     // If Gemini requests a follow-up, return it without saving a diagnostic record yet
@@ -141,7 +139,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error("AI Prediction Route Error:", error);
     return NextResponse.json(
-      { error: "An unexpected error occurred during prediction routing." },
+      { error: "failed due to poor internet connection, check your connection again" },
       { status: 500 }
     );
   }

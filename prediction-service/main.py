@@ -674,7 +674,7 @@ Return ONLY a valid JSON object matching the schema below. Do not include markdo
         )
     except Exception as e:
         print("Error evaluating predictions with Gemini API:", e)
-        raise HTTPException(status_code=500, detail=f"Prediction evaluation failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="failed due to poor internet connection, check your connection again")
 
 @app.post("/follow-up-question", response_model=FollowUpResponse)
 def follow_up_question(request: FollowUpRequest):

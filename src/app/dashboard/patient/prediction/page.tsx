@@ -97,6 +97,7 @@ export default function PredictionPage() {
   // Directions state
   const [directionsDoctor, setDirectionsDoctor] = useState<RecommendedDoctor | null>(null);
   const [showDirections, setShowDirections] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const getDirectionsForHospital = (hospitalAddress: string) => {
     if (hospitalAddress.includes("Max Super Speciality Hospital") && hospitalAddress.includes("Saket")) {
@@ -188,6 +189,7 @@ export default function PredictionPage() {
     setRecommendations(null);
     setDirectionsDoctor(null);
     setShowDirections(false);
+    setError(null);
   };
 
   const fetchDoctorRecommendations = async (disease: string) => {
@@ -216,6 +218,7 @@ export default function PredictionPage() {
     setFollowUpQuestion(null);
     setFollowUpHistory([]);
     setRecommendations(null);
+    setError(null);
 
     // Sequence mock loader logs for premium Linear/Stripe style real-time UX
     const steps = [
@@ -261,10 +264,14 @@ export default function PredictionPage() {
           }
         }
       } else {
-        toast.error(data.error || "Failed to retrieve predictions.");
+        const errorMsg = "failed due to poor internet connection, check your connection again";
+        setError(errorMsg);
+        toast.error(errorMsg);
       }
     } catch {
-      toast.error("Network communication failure with prediction service.");
+      const errorMsg = "failed due to poor internet connection, check your connection again";
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setIsAnalyzing(false);
     }
@@ -277,6 +284,7 @@ export default function PredictionPage() {
     setIsFollowUpLoading(true);
     const answer = followUpAnswer;
     setFollowUpAnswer("");
+    setError(null);
 
     const updatedHistory = [
       ...followUpHistory,
@@ -313,10 +321,14 @@ export default function PredictionPage() {
           }
         }
       } else {
-        toast.error(data.error || "Failed to submit follow-up response.");
+        const errorMsg = "failed due to poor internet connection, check your connection again";
+        setError(errorMsg);
+        toast.error(errorMsg);
       }
     } catch {
-      toast.error("Network communication failure with prediction service.");
+      const errorMsg = "failed due to poor internet connection, check your connection again";
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setIsFollowUpLoading(false);
     }
@@ -596,6 +608,31 @@ export default function PredictionPage() {
                         <span className="text-[10px] font-bold text-health-blue uppercase tracking-wider">Symptom Analysis</span>
                         <p className="text-[10px] text-muted-foreground truncate mt-0.5 animate-pulse">{analysisStep}</p>
                       </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Error Message Panel */}
+            <AnimatePresence>
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                >
+                  <Card className="border-red-500/30 shadow-md bg-red-500/5">
+                    <CardHeader className="pb-3 border-b border-red-500/20 bg-red-500/5">
+                      <CardTitle className="text-sm font-semibold flex items-center gap-2 text-red-600">
+                        <ShieldAlert className="h-4 w-4" />
+                        Analysis Failed
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4">
+                      <p className="text-xs text-red-600 font-semibold leading-relaxed">
+                        {error}
+                      </p>
                     </CardContent>
                   </Card>
                 </motion.div>

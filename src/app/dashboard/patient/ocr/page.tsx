@@ -185,7 +185,7 @@ export default function OcrPrescriptionPage() {
       let medications: string[] = [];
       let symptoms: string[] = [];
       let precautions: string[] = [];
-      let prescrDoc: RecommendedDoctor | null = null;
+      const prescrDoc: RecommendedDoctor | null = null;
 
       if (file) {
         setScanStepLog("Analyzing prescription image with AI...");
@@ -263,7 +263,8 @@ export default function OcrPrescriptionPage() {
         const recs = await getDoctorRecommendations(diseaseName);
         // Filter out the prescribed doctor from the alternatives list
         if (prescrDoc) {
-          setRecommendations(recs.filter(r => r.id !== prescrDoc!.id));
+          const doc = prescrDoc as RecommendedDoctor;
+          setRecommendations(recs.filter(r => r.id !== doc.id));
         } else {
           setRecommendations(recs);
         }
