@@ -188,7 +188,7 @@ export default function OcrPrescriptionPage() {
       let prescrDoc: RecommendedDoctor | null = null;
 
       if (file) {
-        setScanStepLog("Analyzing prescription image with Gemini AI...");
+        setScanStepLog("Analyzing prescription image with AI...");
 
         const formData = new FormData();
         formData.append("file", file);

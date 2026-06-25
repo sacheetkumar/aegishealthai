@@ -96,24 +96,27 @@ export async function POST(req: NextRequest) {
     const topPrediction = predictionData.predictions?.[0];
     const topDiseaseName = topPrediction?.disease || "Unknown";
     const topConfidence = topPrediction?.confidence || 0.5;
+    const modelUsed = predictionData.model_used || "AI";
 
     const dbDisease = await db.disease.findFirst({
       where: { name: { equals: topDiseaseName, mode: "insensitive" } }
     });
 
     // 6. Record prediction data in PostgreSQL via Prisma
+    const isDatasetFallback = modelUsed === "Dataset";
     const predictionLog = await db.prediction.create({
       data: {
         patientId: dbUser.patientProfile.id,
         diseaseId: dbDisease?.id || null,
         confidence: topConfidence,
-        modelName: "Gemini AI Symptom Analyzer",
-        modelRef: "gemini-2.0-flash",
+        modelName: isDatasetFallback ? "Dataset Symptom Matcher" : "Gemini AI Symptom Analyzer",
+        modelRef: isDatasetFallback ? "dataset-vector-fallback" : "gemini-2.0-flash",
         notes: JSON.stringify({
           predictions: predictionData.predictions,
           disclaimer: predictionData.disclaimer,
           symptomsText: symptomsText,
-          symptomsTags: symptoms
+          symptomsTags: symptoms,
+          modelUsed: modelUsed
         }),
       }
     });
@@ -132,7 +135,7 @@ export async function POST(req: NextRequest) {
           confidence: topConfidence
         }
       },
-      aiResults: predictionData,
+      aiResults: { ...predictionData, model_used: modelUsed },
       symptomsEvaluated: symptoms || []
     });
   } catch (error) {

@@ -491,6 +491,46 @@ def get_similar_diseases_numpy(query_str: str, limit: int = 5) -> str:
         
     return "\n".join(lines)
 
+def _dataset_prediction(query_str: str) -> PredictResponse:
+    """
+    Fallback prediction using only the embedded dataset (no AI models).
+    Uses cosine similarity via NumPy to find the closest disease match.
+    """
+    print("WARNING: Using dataset-only prediction (AI models unavailable/exhausted).")
+    top_match = "Influenza"
+    if model and DISEASE_EMBEDDINGS:
+        query_emb = model.encode([query_str])[0]
+        best_sim = -1.0
+        for name, data in DISEASE_EMBEDDINGS.items():
+            emb = data["embedding"]
+            sim = np.dot(query_emb, emb) / (np.linalg.norm(query_emb) * np.linalg.norm(emb))
+            if sim > best_sim:
+                best_sim = sim
+                top_match = name
+
+    info = DISEASES_KB.get(top_match, {
+        "specialist": "General Physician",
+        "description": "A medical condition matched by symptoms similarity.",
+        "precautions": ["rest well", "stay hydrated", "consult physician"]
+    })
+
+    return PredictResponse(
+        success=True,
+        follow_up_required=False,
+        predictions=[
+            DiseasePrediction(
+                disease=top_match,
+                confidence=0.85,
+                severity="Medium",
+                specialist=info["specialist"],
+                description=info["description"],
+                precautions=info["precautions"]
+            )
+        ],
+        disclaimer="Disclaimer: This prediction is for informational purposes only (Dataset-based fallback).",
+        model_used="Dataset"
+    )
+
 class PredictRequest(BaseModel):
     symptoms_text: str = ""
     symptoms_tags: List[str] = []
@@ -510,6 +550,7 @@ class PredictResponse(BaseModel):
     follow_up_question: Optional[str] = None
     predictions: List[DiseasePrediction] = []
     disclaimer: str
+    model_used: str = "AI"
 
 class FollowUpRequest(BaseModel):
     symptoms_text: str = ""
@@ -550,44 +591,10 @@ def predict(request: PredictRequest):
     context_text = get_similar_diseases_numpy(query_str, limit=5)
     print("Retrieved semantic context matches:\n", context_text)
 
-    # 2. Invoke Gemini model
+    # 2. Invoke Gemini model (or fall back to dataset if no API key)
     if not gemini_client:
-        # Emergency mockup fallback if API key is missing to keep service operational
-        print("WARNING: Gemini model not initialized. Using local mockup fallback.")
-        # Find top match from similarity list
-        top_match = "Influenza"
-        if DISEASE_EMBEDDINGS:
-            # Recompute top match name
-            query_emb = model.encode([query_str])[0]
-            best_sim = -1.0
-            for name, data in DISEASE_EMBEDDINGS.items():
-                emb = data["embedding"]
-                sim = np.dot(query_emb, emb) / (np.linalg.norm(query_emb) * np.linalg.norm(emb))
-                if sim > best_sim:
-                    best_sim = sim
-                    top_match = name
-                    
-        mock_info = DISEASES_KB.get(top_match, {
-            "specialist": "General Physician",
-            "description": "A medical condition matched by symptoms similarity.",
-            "precautions": ["rest well", "stay hydrated", "consult physician"]
-        })
-        
-        return PredictResponse(
-            success=True,
-            follow_up_required=False,
-            predictions=[
-                DiseasePrediction(
-                    disease=top_match,
-                    confidence=0.85,
-                    severity="Medium",
-                    specialist=mock_info["specialist"],
-                    description=mock_info["description"],
-                    precautions=mock_info["precautions"]
-                )
-            ],
-            disclaimer="Disclaimer: This prediction is for informational purposes only (Gemini Mock Fallback)."
-        )
+        print("WARNING: Gemini model not initialized. Using dataset-only prediction.")
+        return _dataset_prediction(query_str)
 
     # Build prompt
     prompt = f"""
@@ -633,10 +640,19 @@ Return ONLY a valid JSON object matching the schema below. Do not include markdo
 }}
 """
 
+    # Try AI prediction; fall back to dataset if all AI models are unavailable/exhausted
+    ai_raw = None
     try:
         response = _call_gemini(prompt, generation_config={"response_mime_type": "application/json"})
-        
-        result_json = clean_and_parse_json(response.text)
+        ai_raw = response.text
+    except Exception as e:
+        print(f"AI prediction failed (quota exhausted or models unavailable): {e}. Falling back to dataset-only prediction.")
+
+    if ai_raw is None:
+        return _dataset_prediction(query_str)
+
+    try:
+        result_json = clean_and_parse_json(ai_raw)
         print("Gemini response parsed successfully.")
         
         # Clean/normalize specialist name according to specifications
@@ -653,7 +669,8 @@ Return ONLY a valid JSON object matching the schema below. Do not include markdo
             follow_up_required=result_json.get("follow_up_required", False),
             follow_up_question=result_json.get("follow_up_question"),
             predictions=result_json.get("predictions", []),
-            disclaimer=result_json.get("disclaimer", "This prediction is for informational purposes only and is not a substitute for professional medical advice.")
+            disclaimer=result_json.get("disclaimer", "This prediction is for informational purposes only and is not a substitute for professional medical advice."),
+            model_used="AI"
         )
     except Exception as e:
         print("Error evaluating predictions with Gemini API:", e)

@@ -223,7 +223,7 @@ export default function PredictionPage() {
       "Generating semantic embeddings of symptoms...",
       "Searching clinical knowledge vector database...",
       "Retrieving clinical case context...",
-      "Invoking Gemini-1.5 reasoning engine...",
+      "Running AI diagnostic engine...",
       "Evaluating severity levels & emergency warnings...",
       "Logging diagnostic event in PostgreSQL..."
     ];
@@ -249,11 +249,11 @@ export default function PredictionPage() {
         if (data.follow_up_required) {
           setFollowUpQuestion(data.follow_up_question);
           setFollowUpHistory([{ role: "assistant", content: data.follow_up_question }]);
-          toast.info("Gemini AI requests additional symptom details.");
+          toast.info("AI requests additional symptom details.");
         } else {
           setResults(data.predictions);
           setAiResults(data.aiResults);
-          toast.success("Gemini AI Diagnostics completed successfully!");
+          toast.success("Diagnostics completed successfully!");
           
           const primaryDisease = data.aiResults?.predictions?.[0]?.disease;
           if (primaryDisease) {
@@ -300,12 +300,12 @@ export default function PredictionPage() {
         if (data.follow_up_required) {
           setFollowUpQuestion(data.follow_up_question);
           setFollowUpHistory(prev => [...prev, { role: "assistant" as const, content: data.follow_up_question }]);
-          toast.info("Gemini AI requests additional symptom details.");
+          toast.info("AI requests additional symptom details.");
         } else {
           setResults(data.predictions);
           setAiResults(data.aiResults);
           setFollowUpQuestion(null);
-          toast.success("Gemini AI Diagnostics completed successfully!");
+          toast.success("Diagnostics completed successfully!");
           
           const primaryDisease = data.aiResults?.predictions?.[0]?.disease;
           if (primaryDisease) {
@@ -451,7 +451,7 @@ export default function PredictionPage() {
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-semibold">Describe Your Symptoms</CardTitle>
-                <CardDescription className="text-xs">Type your symptoms in free-text format for the Gemini AI model to analyze.</CardDescription>
+                <CardDescription className="text-xs">Type your symptoms in free-text format for AI analysis.</CardDescription>
               </CardHeader>
               <CardContent>
                 <textarea
