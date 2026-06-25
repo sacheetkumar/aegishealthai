@@ -107,8 +107,58 @@ Respond ONLY with a valid JSON object. No markdown, no extra text.
       }
     }
 
+    if (!text && process.env.OPENAI_API_KEY) {
+      console.log("Falling back to OpenAI GPT Vision models...");
+      const gptModels = ["gpt-4o-mini", "gpt-4o"];
+      for (const gptModel of gptModels) {
+        try {
+          console.log(`Attempting prescription image analysis with OpenAI model: ${gptModel}`);
+          const url = "https://api.openai.com/v1/chat/completions";
+          const response = await fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
+            },
+            body: JSON.stringify({
+              model: gptModel,
+              messages: [
+                {
+                  role: "user",
+                  content: [
+                    { type: "text", text: prompt },
+                    {
+                      type: "image_url",
+                      image_url: {
+                        url: `data:${mimeType};base64,${base64}`
+                      }
+                    }
+                  ]
+                }
+              ],
+              response_format: { type: "json_object" }
+            })
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            const candidateText = data?.choices?.[0]?.message?.content;
+            if (candidateText) {
+              text = candidateText;
+              break;
+            }
+          } else {
+            lastError = await response.text();
+            console.warn(`OpenAI Model ${gptModel} failed with status: ${response.status}: ${lastError}`);
+          }
+        } catch (err: any) {
+          lastError = err.message || String(err);
+        }
+      }
+    }
+
     if (!text) {
-      return NextResponse.json({ error: `Gemini API error: ${lastError || "No content returned from any model"}` }, { status: 502 });
+      return NextResponse.json({ error: `AI service API error: ${lastError || "No content returned from any model"}` }, { status: 502 });
     }
 
     const parsed = JSON.parse(text.replace(/```json|```/g, "").trim());

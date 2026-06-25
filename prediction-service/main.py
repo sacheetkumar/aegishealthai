@@ -34,31 +34,77 @@ if GEMINI_API_KEY:
     import google.genai as genai
     gemini_client = genai.Client(api_key=GEMINI_API_KEY)
 
+# OpenAI configure
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+openai_client = None
+if OPENAI_API_KEY:
+    try:
+        import openai
+        openai_client = openai.OpenAI(api_key=OPENAI_API_KEY)
+        print("OpenAI client initialized.")
+    except Exception as e:
+        print(f"Warning: Failed to initialize OpenAI client: {e}")
+
 def _call_gemini(prompt_text, **gen_kwargs):
     import time as _t
     config = gen_kwargs.pop("config", None) or gen_kwargs.pop("generation_config", None)
     
+    # 1. Try Gemini models first
     fallback_models = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-2.0-flash-lite-preview-02-05", "gemini-1.5-pro"]
     
     last_exception = None
-    for model_name in fallback_models:
-        for attempt in range(2):
+    if gemini_client:
+        for model_name in fallback_models:
+            for attempt in range(2):
+                try:
+                    print(f"Attempting Gemini generation with model: {model_name}...")
+                    return gemini_client.models.generate_content(
+                        model=model_name,
+                        contents=prompt_text,
+                        config=config
+                    )
+                except Exception as e:
+                    last_exception = e
+                    err_str = str(e)
+                    if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
+                        print(f"Model {model_name} rate limited/exhausted: {err_str}. Trying next option...")
+                        _t.sleep(1)
+                        continue
+                    raise e
+                    
+    # 2. Fall back to OpenAI GPT if Gemini failed/unconfigured
+    if openai_client:
+        print("Falling back to OpenAI GPT models...")
+        gpt_models = ["gpt-4o-mini", "gpt-4o"]
+        for gpt_model in gpt_models:
             try:
-                print(f"Attempting Gemini generation with model: {model_name}...")
-                return gemini_client.models.generate_content(
-                    model=model_name,
-                    contents=prompt_text,
-                    config=config
-                )
+                print(f"Attempting OpenAI generation with model: {gpt_model}...")
+                kwargs = {
+                    "model": gpt_model,
+                    "messages": [{"role": "user", "content": prompt_text}],
+                }
+                # Check if JSON response is requested
+                if config and isinstance(config, dict) and config.get("response_mime_type") == "application/json":
+                    kwargs["response_format"] = {"type": "json_object"}
+                
+                chat_completion = openai_client.chat.completions.create(**kwargs)
+                
+                # Wrap in mock object to match Gemini's return structure
+                class MockGeminiResponse:
+                    def __init__(self, text):
+                        self.text = text
+                
+                return MockGeminiResponse(chat_completion.choices[0].message.content)
             except Exception as e:
+                print(f"OpenAI model {gpt_model} failed: {e}")
                 last_exception = e
-                err_str = str(e)
-                if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
-                    print(f"Model {model_name} rate limited/exhausted: {err_str}. Trying next option...")
-                    _t.sleep(1)
-                    continue
-                raise e
-    raise last_exception
+                continue
+                
+    # If both Gemini and OpenAI failed (or weren't configured)
+    if last_exception:
+        raise last_exception
+    else:
+        raise Exception("No AI model client is configured. Please set GEMINI_API_KEY or OPENAI_API_KEY.")
 
 def clean_and_parse_json(text: str) -> dict:
     cleaned = text.strip()
