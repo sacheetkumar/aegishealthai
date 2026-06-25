@@ -7,7 +7,12 @@ const bcrypt = require('bcryptjs');
 dotenv.config();
 
 const connectionString = process.env.DATABASE_URL;
-const pool = new Pool({ connectionString });
+const pool = new Pool({ 
+  connectionString,
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 30000
+});
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
@@ -223,7 +228,7 @@ async function main() {
         mobileNumber,
         clinicPhone,
         address,
-        isRegistered: false,
+        isRegistered: (j % 2 === 0),
         ratings,
         availabilities
       });
